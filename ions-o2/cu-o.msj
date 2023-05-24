@@ -1,0 +1,139 @@
+# Desmond standard NPT relaxation protocol
+# All times are in the unit of ps.
+# Energy is in the unit of kcal/mol.
+task {
+   task = "desmond:auto"
+   set_family = {
+      desmond = {
+         checkpt.write_last_step = no
+      }
+   }
+}
+
+simulate {
+   title       = "Brownian Dynamics NVT, T = 10 K, small timesteps, and restraints on solute heavy atoms, 100ps"
+   annealing   = off
+   time        = 100
+   timestep    = [0.001 0.001 0.003 ]
+   temperature = 10.0
+   ensemble = {
+      class = "NVT"
+      method = "Brownie"
+      brownie = {
+         delta_max = 0.1
+      }
+   }
+   restrain = {
+      atom = "solute_heavy_atom"
+      force_constant = 50.0
+   }
+}
+
+simulate {
+   title       = "NVT, T = 10 K, small timesteps, and restraints on solute heavy atoms, 12ps"
+   annealing   = off
+   time        = 12
+   timestep    = [0.001 0.001 0.003]
+   temperature = 10.0
+   restrain    = { atom = solute_heavy_atom force_constant = 50.0 }
+   ensemble    = {
+      class  = NVT
+      method = Langevin
+      thermostat.tau = 0.1
+   }
+
+   randomize_velocity.interval = 1.0
+   eneseq.interval             = 0.3
+   trajectory.center           = []
+}
+
+simulate {
+   title       = "NPT, T = 10 K, and restraints on solute heavy atoms, 12ps"
+   annealing   = off
+   time        = 12
+   temperature = 10.0
+   restrain    = retain
+   ensemble    = {
+      class  = NPT
+      method = Langevin
+      thermostat.tau = 0.1
+      barostat  .tau = 50.0
+   }
+
+   randomize_velocity.interval = 1.0
+   eneseq.interval             = 0.3
+   trajectory.center           = []
+}
+
+simulate {
+   title       = "NPT and restraints on solute heavy atoms, 12ps"
+   effect_if   = [["@*.*.annealing"] 'annealing = off temperature = "@*.*.temperature[0][0]"']
+   time        = 12
+   restrain    = retain
+   ensemble    = {
+      class  = NPT
+      method = Langevin
+      thermostat.tau = 0.1
+      barostat  .tau = 50.0
+   }
+
+   randomize_velocity.interval = 1.0
+   eneseq.interval             = 0.3
+   trajectory.center           = []
+}
+
+simulate {
+   title       = "NPT and no restraints, 24ps"
+   effect_if   = [["@*.*.annealing"] 'annealing = off temperature = "@*.*.temperature[0][0]"']
+   time        = 24
+   ensemble    = {
+      class  = NPT
+      method = Langevin
+      thermostat.tau = 0.1
+      barostat  .tau = 2.0
+   }
+
+   eneseq.interval   = 0.3
+   trajectory.center = solute
+}
+
+simulate {
+   cfg_file = "desmond_metadynamics_job_2.cfg"
+   jobname  = "$MASTERJOBNAME"
+   dir      = "."
+   compress = ""
+   meta = {
+      cv = [
+         {atom = ["atom.n 4981" "atom.n 5495" ]
+          type = dist
+          width = 0.05
+         }
+
+         {atom = ["atom.n 4950,4951,4952,4953,4954,4955,4956,4957,4958,4959,4960,4961,4962,4963,4964,4965,4966,4967,4968,4969,4970,4971,4972,4973,4974,4975,4976,4977,4978,4979,4980,4981,4982,4983,4984,4985,4986,4987,4988,4989,4990,4991,4992,4993,4994,4995,4996,4997,4998,4999,5000,5001,5002,5003,5004,5005,5006,5007,5008,5009,5010,5011,5012,5013,5014,5015,5016,5017,5018,5019,5020,5021,5022,5023,5024,5025,5026,5027,5028,5029,5030,5031,5032,5033,5034,5035,5036,5037,5038,5039,5040,5041,5042,5043,5044,5045,5046,5047,5048,5049,5050,5051,5052,5053,5054,5055,5056,5057,5058,5059,5060,5061,5062,6672,6676" ]
+          type = rmsd
+          width = 0.1
+         }
+      ]
+      cv_name = "$JOBNAME$[_replica$REPLICA$].cvseq"
+      first = 0.0
+      height = 0.6
+      interval = 0.09
+      name = "$JOBNAME$[_replica$REPLICA$].kerseq"
+      kTemp = 2.4000
+   } 
+           backend ={
+               # set cvseq interval to trajectory output
+               force.term.ES.interval = '@*.*.*.*.trajectory.interval'
+           }
+           checkpt.write_last_step = yes
+        
+}
+
+analysis {
+    meta = { }
+    dir = "."
+    compress = ""
+}
+
+# Job launching command:
+# $SCHRODINGER/utilities/multisim -VIEWNAME desmond_metadynamics_gui.MetadynamicsApp -JOBNAME desmond_metadynamics_job_2 -HOST localhost -maxjob 1 -cpu 1 -m desmond_metadynamics_job_2.msj -c desmond_metadynamics_job_2.cfg -description Metadynamics desmond_metadynamics_job_2.cms -mode umbrella -PROJ /tmp/yiwen2022/Tmp_16May2023_0927_04241 -DISP append -o desmond_metadynamics_job_2-out.cms -lic DESMOND_ACADEMIC:16
