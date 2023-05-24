@@ -8,3 +8,7 @@ Input folder:
 Cu2+-binding-input.msj: The input file of the metadynamics with 3 as initial structure.
 Zn2+-binding-input.msj: The similar simulation as Cu2+-binding-input.msj but with zinc ion.
 4-state.msj: Input file of metadynamics for LTQ activation process.
+
+ions-o2 folder:
+cu-o.msj: The input file of the metadynamics with copper ion and O2 molecular binding.
+zn-o.msj: The input file of the metadynamics with zinc ion and O2 molecularbinding.
